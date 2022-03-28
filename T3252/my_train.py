@@ -223,7 +223,7 @@ def k_fold(args):
     print("k_fold no : ",n_iter+1)
     print("# train : ",len(train_ind)," # test : ",len(test_ind))
 
-    label_train, label_test = np.array(k_label)[train_ind.astype(int)], np.array(k_label)[test_ind.astype(int)]
+ 
     train_dataset = k_dataset.iloc[train_ind]
     dev_dataset = k_dataset.iloc[test_ind]
 
@@ -282,7 +282,7 @@ def k_fold(args):
    #     return model
 
     trainer = Trainer(    
-        model = model,       #기존에 modeld을 model_init으로 바꾸어야합니다  # the instantiated 🤗 Transformers model to be trained
+        model = model,      # the instantiated 🤗 Transformers model to be trained
         args=training_args,                  # training arguments, defined above
         train_dataset=RE_train_dataset,         # training dataset
         eval_dataset=RE_dev_dataset,             # evaluation dataset
