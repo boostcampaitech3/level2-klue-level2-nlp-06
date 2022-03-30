@@ -1,6 +1,8 @@
 import pickle as pickle
 import os
+from pickletools import optimize
 from random import shuffle
+from sched import scheduler
 import pandas as pd
 import torch
 import sklearn
@@ -39,7 +41,7 @@ if torch.cuda.is_available():
 
 
 import wandb
-wandb.init(project="KLUE_SJ", entity="seonjae")
+
 def klue_re_micro_f1(preds, labels):
     """KLUE-RE micro f1 (except no_relation)"""
     label_list = ['no_relation', 'org:top_members/employees', 'org:members',
@@ -189,6 +191,7 @@ def train():
         train_dataset=RE_train_dataset,         # training dataset
         eval_dataset=RE_dev_dataset,             # evaluation dataset
         compute_metrics=compute_metrics         # define metrics function
+        #optimizers= (optimizer, scheduler)
     )
 
     # trainer.hyperparameter_search(direction="maximize", hp_space=my_hp_space_ray)
@@ -209,29 +212,58 @@ def my_hp_space_ray(trial):
     } 
 
 
+
 ############################### K_FOLD #####################################
 def k_fold(args):
   print()
   print("I'm k_fold Trainer!")
 
   kfold = StratifiedKFold(n_splits=args.fold_num, shuffle = True)
-  k_dataset = load_data("../dataset/train/train.csv")
+  k_dataset = load_data("./train_backup.csv")
   k_label = label_to_num(k_dataset['label'].values)
-    
+  MODEL_NAME = args.model_name
+  tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+  my_defined = ['[UNU]',',',"?","!"]
+      
+  for i in range(1,10):
+      my_defined.append(f'[UNK{i}]')
+
+  for i in range(1,100):
+      my_defined.append(f'[UNU{i}]')
+      
+  special_tokens_dict = {'additional_special_tokens': my_defined}
+  tokenizer.add_special_tokens(special_tokens_dict)
+
+    # setting model hyperparameter
+  model_config =  AutoConfig.from_pretrained(MODEL_NAME)
+  model_config.num_labels = 30
+
+  model =  AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
+  model.resize_token_embeddings(len(tokenizer))
+  print(model.config)
+  model.parameters
+  device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+  print(device)
+  model.to(device)    
+  
   for n_iter, (train_ind, test_ind) in enumerate(kfold.split(k_dataset,k_label)):
+    
+    wandb.init(
+                entity="boostcamp_nlp06",
+                project="KLUE_MODEL",
+                name=args.wandb_name  + f'_{n_iter}-fold',
+  
+            )
+    wandb.config.update(args)
         
-    print("k_fold no : ",n_iter+1)
+    print("------------------------k_fold no : ",n_iter+1)
     print("# train : ",len(train_ind)," # test : ",len(test_ind))
 
- 
     train_dataset = k_dataset.iloc[train_ind]
     dev_dataset = k_dataset.iloc[test_ind]
 
     train_label = label_to_num(train_dataset['label'].values)
     dev_label = label_to_num(dev_dataset['label'].values) 
-
-    MODEL_NAME = args.model_name
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
     # tokenizing dataset
     tokenized_train = tokenized_dataset(train_dataset, tokenizer)
@@ -241,32 +273,31 @@ def k_fold(args):
     RE_train_dataset = RE_Dataset(tokenized_train, train_label)
     RE_dev_dataset = RE_Dataset(tokenized_dev, dev_label)
 
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+   
     if torch.cuda.is_available():
       torch.cuda.empty_cache()
       print("cuda empty cache!")
 
-    print(device)
-    # setting model hyperparameter
-    model_config =  AutoConfig.from_pretrained(MODEL_NAME)
-    model_config.num_labels = 30
+    
+    ''' 이 부분은 해 봤는데 잘 안되는거 같아서 적당한 값을 찾아줘야 할 것 같습니다. 
+    사용하시려면  trainer함수 안 optimizers 주석 제거 해주세요.
 
-    model =  AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
-    #model.resize_token_embeddings(len(tokenizer))
-    print(model.config)
-    model.parameters
-    model.to(device)
-       
+    optimizer = torch.optim.AdamW(model.parameters(), lr=0.03, 
+      betas=(0.8, 0.999), eps=1e-02,
+      weight_decay=0.05,)
+
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=1, eta_min=0.02)
+'''
     # 사용한 option 외에도 다양한 option들이 있습니다.
     # https://huggingface.co/transformers/main_classes/trainer.html#trainingarguments 참고해주세요.
     training_args = TrainingArguments(
       output_dir='./results',          # output directory
       save_total_limit=5,              # number of total save model.
       save_steps=500,                 # model saving step.
-      num_train_epochs=5,              # total number of training epochs
-      learning_rate=2e-5,               # learning_rate
-      per_device_train_batch_size=32,  # batch size per device during training
-      per_device_eval_batch_size=32,   # batch size for evaluation
+      num_train_epochs=7,              # total number of training epochs
+      learning_rate=4e-5,               # learning_rate
+      per_device_train_batch_size=8,  # batch size per device during training
+      per_device_eval_batch_size=8,   # batch size for evaluation
       warmup_steps=500,                # number of warmup steps for learning rate scheduler
       weight_decay=0.01,               # strength of weight decay
       logging_dir='./logs',            # directory for storing logs
@@ -276,7 +307,9 @@ def k_fold(args):
                                          # `steps`: Evaluate every `eval_steps`.
                                          # `epoch`: Evaluate every end of epoch.
       eval_steps = 500,            # evaluation step.
-      load_best_model_at_end = True 
+      load_best_model_at_end = True ,
+      report_to="wandb",
+      metric_for_best_model = 'eval_micro f1 score'
     )
   #  def model_init(): 
    #     return model
@@ -287,6 +320,7 @@ def k_fold(args):
         train_dataset=RE_train_dataset,         # training dataset
         eval_dataset=RE_dev_dataset,             # evaluation dataset
         compute_metrics=compute_metrics  # define metrics function
+       # optimizers=(optimizer, scheduler)
             
 )
        
@@ -294,7 +328,7 @@ def k_fold(args):
     
     # train model
     trainer.train()
-    model.save_pretrained(f'./best_model/k_fold/{args.model_name}/{n_iter}-fold')
+    model.save_pretrained(f'./best_model/k_fold/{args.wandb_name}/{n_iter}')
 
   print("Done!")
 
@@ -310,9 +344,10 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model_name', type=str, default="klue/roberta-base")
+    parser.add_argument('--model_name', type=str, default="klue/roberta-large")
     parser.add_argument('--k_fold', type=bool, default=False)
     parser.add_argument('--fold_num', type=int, default=5)
+    parser.add_argument('--wandb_name', type=str, default="roberta-large_kfold7")
     args = parser.parse_args()
     main(args)
 
