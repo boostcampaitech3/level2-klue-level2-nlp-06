@@ -223,28 +223,13 @@ def k_fold(args):
   k_label = label_to_num(k_dataset['label'].values)
   MODEL_NAME = args.model_name
   tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-  my_defined = ['[UNU]',',',"?","!"]
-      
-  for i in range(1,10):
-      my_defined.append(f'[UNK{i}]')
+  my_defined = ['[UNU]',"?","!"]
 
-  for i in range(1,100):
-      my_defined.append(f'[UNU{i}]')
+  for i in range(1,200,3):
+      my_defined.append(f'[UNU]')
       
   special_tokens_dict = {'additional_special_tokens': my_defined}
   tokenizer.add_special_tokens(special_tokens_dict)
-
-    # setting model hyperparameter
-  model_config =  AutoConfig.from_pretrained(MODEL_NAME)
-  model_config.num_labels = 30
-
-  model =  AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
-  model.resize_token_embeddings(len(tokenizer))
-  print(model.config)
-  model.parameters
-  device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-  print(device)
-  model.to(device)    
   
   for n_iter, (train_ind, test_ind) in enumerate(kfold.split(k_dataset,k_label)):
     
@@ -272,22 +257,32 @@ def k_fold(args):
     # make dataset for pytorch.
     RE_train_dataset = RE_Dataset(tokenized_train, train_label)
     RE_dev_dataset = RE_Dataset(tokenized_dev, dev_label)
+        # setting model hyperparameter
+    model_config =  AutoConfig.from_pretrained(MODEL_NAME)
+    model_config.num_labels = 30
 
+    model =  AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, config=model_config)
+    model.resize_token_embeddings(len(tokenizer))
+    print(model.config)
+    model.parameters
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    print(device)
+    model.to(device)    
    
     if torch.cuda.is_available():
       torch.cuda.empty_cache()
       print("cuda empty cache!")
 
     
-    ''' 이 부분은 해 봤는데 잘 안되는거 같아서 적당한 값을 찾아줘야 할 것 같습니다. 
-    사용하시려면  trainer함수 안 optimizers 주석 제거 해주세요.
+    # 이 부분은 해 봤는데 잘 안되는거 같아서 적당한 값을 찾아줘야 할 것 같습니다. 
+    #사용하시려면  trainer함수 안 optimizers 주석 제거 해주세요.
 
-    optimizer = torch.optim.AdamW(model.parameters(), lr=0.03, 
-      betas=(0.8, 0.999), eps=1e-02,
-      weight_decay=0.05,)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.002)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20)
 
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=1, eta_min=0.02)
-'''
+   # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=10, eta_min=0.02)
+
+   
     # 사용한 option 외에도 다양한 option들이 있습니다.
     # https://huggingface.co/transformers/main_classes/trainer.html#trainingarguments 참고해주세요.
     training_args = TrainingArguments(
@@ -295,11 +290,11 @@ def k_fold(args):
       save_total_limit=5,              # number of total save model.
       save_steps=500,                 # model saving step.
       num_train_epochs=7,              # total number of training epochs
-      learning_rate=4e-5,               # learning_rate
+      learning_rate=3e-5,               # learning_rate
       per_device_train_batch_size=8,  # batch size per device during training
       per_device_eval_batch_size=8,   # batch size for evaluation
       warmup_steps=500,                # number of warmup steps for learning rate scheduler
-      weight_decay=0.01,               # strength of weight decay
+      weight_decay=0.001,               # strength of weight decay
       logging_dir='./logs',            # directory for storing logs
       logging_steps=100,              # log saving step.
       evaluation_strategy='steps', # evaluation strategy to adopt during training
@@ -319,8 +314,8 @@ def k_fold(args):
         args=training_args,                  # training arguments, defined above
         train_dataset=RE_train_dataset,         # training dataset
         eval_dataset=RE_dev_dataset,             # evaluation dataset
-        compute_metrics=compute_metrics  # define metrics function
-       # optimizers=(optimizer, scheduler)
+        compute_metrics=compute_metrics,  # define metrics function
+        optimizers=(optimizer, scheduler)
             
 )
        
@@ -340,14 +335,14 @@ def main(args):
         k_fold(args)
     else:
         train()
-#main
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_name', type=str, default="klue/roberta-large")
     parser.add_argument('--k_fold', type=bool, default=False)
     parser.add_argument('--fold_num', type=int, default=5)
-    parser.add_argument('--wandb_name', type=str, default="roberta-large_kfold7")
+    parser.add_argument('--wandb_name', type=str, default="roberta-large_kfold6_Adam_stepLR")
     args = parser.parse_args()
     main(args)
 
