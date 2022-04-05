@@ -22,15 +22,10 @@ def ensemble(prediction_dir):
         probs += pd.DataFrame(df.probs.map(eval).to_list())
 
   probs = probs.div(probs.sum(axis=1), axis=0)
-  #print(probs)
   probs_argmax = probs.idxmax(axis=1).values.tolist()
-  #print(probs_argmax)
   pred_answer = num_to_label(probs_argmax)
+  
   output_prob = probs.values.tolist()
-
-  #test_dataset_dir = "../dataset/test/test_data.csv"
-  #test_id, test_dataset, test_label = load_test_dataset(test_dataset_dir, tokenizer)
-  #print(test_id)
   
   output = pd.DataFrame({"id": [i for i in range(7765)],"pred_label": pred_answer,"probs": output_prob,})
   output.to_csv("./prediction/ensemble.csv", index=False)
