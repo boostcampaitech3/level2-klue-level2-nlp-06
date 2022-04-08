@@ -4,6 +4,8 @@ import pickle as pickle
 from glob import glob
 import argparse
 
+from inference import num_to_label
+
 
 def ensemble(prediction_dir):
   """
@@ -24,24 +26,12 @@ def ensemble(prediction_dir):
   probs = probs.div(probs.sum(axis=1), axis=0)
   probs_argmax = probs.idxmax(axis=1).values.tolist()
   pred_answer = num_to_label(probs_argmax)
-  
   output_prob = probs.values.tolist()
   
   output = pd.DataFrame({"id": [i for i in range(7765)],"pred_label": pred_answer,"probs": output_prob,})
   output.to_csv("./prediction/ensemble.csv", index=False)
   print("./prediction/ensemble.csv에 저장 완료...")
 
-def num_to_label(label):
-    """
-    숫자로 되어 있던 class를 원본 문자열 라벨로 변환 합니다.
-    """
-    origin_label = []
-    with open("dict_num_to_label.pkl", "rb") as f:
-        dict_num_to_label = pickle.load(f)
-    for v in label:
-        origin_label.append(dict_num_to_label[v])
-
-    return origin_label
 
 def main(args):
   print(f"{'='*15}Ensemble을 시작합니다!{'='*15}")
