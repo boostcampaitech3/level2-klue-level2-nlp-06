@@ -154,8 +154,9 @@ def train():
         save_steps=500,                 # model saving step.
         num_train_epochs=args.epoch,              # total number of training epochs
         learning_rate=1e-4,               # learning_rate
-        per_device_train_batch_size=24,  # batch size per device during training
-        per_device_eval_batch_size=24,   # batch size for evaluation
+        # batch size per device during training
+        per_device_train_batch_size=args.batch_size,
+        per_device_eval_batch_size=args.batch_size,   # batch size for evaluation
         warmup_ratio=0.1,
         warmup_steps=500,                # number of warmup steps for learning rate scheduler
         weight_decay=0.01,               # strength of weight decay
@@ -257,8 +258,9 @@ def k_fold(args):
             save_steps=500,                 # model saving step.
             num_train_epochs=args.epoch,              # total number of training epochs
             learning_rate=2e-5,               # learning_rate
-            per_device_train_batch_size=16,  # batch size per device during training 32
-            per_device_eval_batch_size=16,   # batch size for evaluation 32
+            # batch size per device during training 32
+            per_device_train_batch_size=args.batch_size,
+            per_device_eval_batch_size=args.batch_size,   # batch size for evaluation 32
             warmup_steps=500,                # number of warmup steps for learning rate scheduler
             weight_decay=0.01,               # strength of weight decay
             logging_dir='./logs',            # directory for storing logs
@@ -310,6 +312,8 @@ if __name__ == '__main__':
                         help='학습 데이터셋을 선택합니다. default: ./dataset/train.csv')
     parser.add_argument('--model_name', type=str,
                         default="klue/roberta-large", help='default: klue/roberta-large')
+    parser.add_argument('--batch_size', type=int,
+                        default=16, help='default: 16')
     parser.add_argument('--k_fold', type=bool,
                         default=False, help='default: False')
     parser.add_argument('--fold_num', type=int, default=5, help='default: 5')
