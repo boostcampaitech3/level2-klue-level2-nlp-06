@@ -4,16 +4,20 @@ BoostCamp AI Tech 3th. KLUE 문장 분류 Task
 
 ## Index
 
-- Competition introduction
-- Enviroment
-- Tree
-- How to use?
-  - Dependencies & Requirements
-  - Train
-  - Inference
-  - Soft-voting Ensemble
-- Reference
-- Result
+- [🐧 자, 연어 한접시's Second P-Stage Project 🐧](#-자-연어-한접시s-second-p-stage-project-)
+  - [Index](#index)
+  - [Competition Overview](#competition-overview)
+    - [Background](#background)
+    - [Target](#target)
+    - [Dataset](#dataset)
+  - [Dev Environment](#dev-environment)
+  - [Project Tree](#project-tree)
+  - [Usage](#usage)
+    - [Train option](#train-option)
+    - [Inference](#inference)
+    - [Ensemble](#ensemble)
+  - [Wrap Up Report](#wrap-up-report)
+  - [Reference & License](#reference--license)
 
 ## Competition Overview
 
