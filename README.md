@@ -165,7 +165,7 @@ python ensemble.py -h
 
 ## Wrap Up Report
 
-~~작성중~~
+[WrapUp Report](https://github.com/boostcampaitech3/level2-klue-level2-nlp-06/blob/main/src/KLUE_NLP_%ED%8C%80%20%EB%A6%AC%ED%8F%AC%ED%8A%B8(06%EC%A1%B0).pdf)
 
 ## Reference & License
 
