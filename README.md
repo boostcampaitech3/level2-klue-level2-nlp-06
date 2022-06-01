@@ -48,7 +48,7 @@ relation: 단체:별칭 (org:alternate_names)
   - 데이터 분포상 많은 부분을 차지하고 있는 **no_relation class는 제외**하고 F1 score가 계산 됩니다.
   ![](src/micro_f1_precision.png)
   ![](src/micro_f1_recall.png)
-  ![](src/micro_f1_m.png)
+  ![](src/micro_f1_score.png)
   ![](src/micro_f1_t.png)
 - AUPRC
   - x축은 **Recall**, y축은 **Precision**이며, 모든 class에 대한 평균적인 AUPRC로 계산해 score를 측정 합니다. imbalance한 데이터에 유용한 metric 입니다.
