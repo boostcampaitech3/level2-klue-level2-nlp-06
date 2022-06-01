@@ -23,7 +23,8 @@ BoostCamp AI Tech 3th. KLUE 문장 분류 Task
 
 ### Background
 
-> 문장 속에서 단어간 관계성을 파악하는 것은 의미나 의도를 해석함에 있어서 많은 도움을 줍니다. 요약된 정보를 활용하여 QA 시스템 구축을 하거나, 자연스러운 대화가 이어질 수 있도록 하는 바탕이 되기도 합니다. 이처럼 관계 추출(Relation Extraction)은 문장의 단어(Entity)에 대한 속성과 관계를 예측하는 Task입니다. 관계 추출은 지식 그래프를 구축하기 위한 핵심으로 구조화된 검색, 감정분석, 질의응답, 요약과 같은 다양한 NLP task의 기반이 됩니다.
+> 문장 속에서 단어간 관계성을 파악하는 것은 의미나 의도를 해석함에 있어서 많은 도움을 줍니다. 요약된 정보를 활용하여 QA 시스템 구축을 하거나, 자연스러운 대화가 이어질 수 있도록 하는 바탕이 되기도 합니다. 
+이처럼 관계 추출(Relation Extraction)은 문장의 단어(Entity)에 대한 속성과 관계를 예측하는 Task입니다. 관계 추출은 지식 그래프를 구축하기 위한 핵심으로 구조화된 검색, 감정분석, 질의응답, 요약과 같은 다양한 NLP task의 기반이 됩니다.
 
 ### Target
 
@@ -39,6 +40,18 @@ relation: 단체:별칭 (org:alternate_names)
 
 - input: sentence, subject_entity, object_entity
 - output: pred_label, probs
+
+### Evaluation
+> KLUE-RE evaluation metric과 동일한 micro F1-score와 AUPRC를 evaluation metric으로 사용합니다.
+- Micro F1 score
+  - micro-precision과 micro-recall의 조화 평균이며, 각 샘플에 동일한 importance를 부여해, <u>샘플이 많은 클래스에 더 많은 가중치를 부여</u>합니다. 
+  - 데이터 분포상 많은 부분을 차지하고 있는 **no_relation class는 제외**하고 F1 score가 계산 됩니다.
+  ![](src/micro_f1_m.png)
+  ![](src/micro_f1_t.png)
+- AUPRC
+  - x축은 **Recall**, y축은 **Precision**이며, 모든 class에 대한 평균적인 AUPRC로 계산해 score를 측정 합니다. imbalance한 데이터에 유용한 metric 입니다.
+  ![](src/auprc.png)
+  - 위 그래프의 예시는 scikit-learn의 Precision-Recall 그래프의 [예시](https://scikit-learn.org/stable/auto_examples/model_selection/plot_precision_recall.html#sphx-glr-auto-examples-model-selection-plot-precision-recall-py) 입니다. 그림의 예시와 같이 class 0, 1, 2의 area(면적 값)을 각각 구한 후, 평균을 계산한 결과를 AUPRC score로 사용합니다.
 
 ### Dataset
 
@@ -165,12 +178,11 @@ python ensemble.py -h
 
 ## Wrap Up Report
 
-[WrapUp Report](https://github.com/boostcampaitech3/level2-klue-level2-nlp-06/blob/main/src/KLUE_NLP_%ED%8C%80%20%EB%A6%AC%ED%8F%AC%ED%8A%B8(06%EC%A1%B0).pdf)
+Task를 수행하면서 시도했던 실험과 결과, 회고는 [WrapUp Report](https://github.com/boostcampaitech3/level2-klue-level2-nlp-06/blob/main/src/KLUE_NLP_%ED%8C%80%20%EB%A6%AC%ED%8F%AC%ED%8A%B8(06%EC%A1%B0).pdf)에서 확인할 수 있습니다.
 
 ## Reference & License
 
 - Paper
-  - KLUE: Korean Language Understanding Evaluation
-  - [link](https://arxiv.org/abs/2105.09680)
+  - [KLUE: Korean Language Understanding Evaluation](https://arxiv.org/abs/2105.09680)
 - Dataset
   ![](src/license.png)
